@@ -69,7 +69,7 @@ Open a new terminal afterwards so `fly` is on your PATH, and check it with `fly 
 ### 2. Get the code and log in to Fly
 
 ```bash
-git clone <this repo's URL> awakediscordbot
+git clone https://github.com/petrepopescu21/caffenito.git awakediscordbot
 ```
 
 ```bash
