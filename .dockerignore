@@ -1,0 +1,8 @@
+node_modules
+.env
+qr
+data
+.git
+.venv
+assets/*.pdf
+assets/*.py

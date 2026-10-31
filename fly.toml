@@ -1,0 +1,52 @@
+# Fly.io config for the Discord bot.
+#
+# The bot connects out to Discord and also serves a small HTTP API (src/api.js) at
+# https://awake-discord-bot.fly.dev. Fly terminates HTTPS and forwards to port 8080.
+# Auto-stop is OFF: a stopped machine would also take the bot offline on Discord.
+#
+# Run exactly ONE machine (deploy with --ha=false). Two copies would each send
+# welcome messages and handle commands, and they'd disagree about shop status.
+
+app = "awake-discord-bot"
+primary_region = "ams"
+
+[build]
+
+[env]
+  DATA_DIR = "/data"
+  # Robert, Admin, Barista: can use /intel and "Add to dossier"
+  STAFF_ROLE_IDS = "1564702651608735754,1564702720273686628,1564706244269309983"
+
+  # Claude API via Workload Identity Federation: no API key. For each token exchange the
+  # bot mints a fresh Fly OIDC token with this audience (src/fly-oidc.js, src/claude.js).
+  # These IDs are not secrets.
+  FLY_OIDC_AUDIENCE = "https://api.anthropic.com"
+  ANTHROPIC_ORGANIZATION_ID = "936e75c6-86fd-485a-8dc6-a330acf1d9fe"
+  ANTHROPIC_SERVICE_ACCOUNT_ID = "svac_01ARkUB9kQtFHArRQEd3oMon"   # caffenito-bot
+  ANTHROPIC_FEDERATION_RULE_ID = "fdrl_01FBMok1AxzEL5oA5gwu4tJv"   # caffenito-on-fly
+  # The rule covers several workspaces, so name the one to bill (else: workspace_id_required).
+  ANTHROPIC_WORKSPACE_ID = "wrkspc_01Jcuze1H4N8FWLy8BCKNGHZ"
+
+# What /bully has learned about members. Create once with:
+#   fly volumes create caffenito_data -r ams -s 1 -a awake-discord-bot
+[mounts]
+  source = "caffenito_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/health"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
